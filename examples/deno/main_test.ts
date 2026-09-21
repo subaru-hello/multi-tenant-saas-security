@@ -1,4 +1,4 @@
-import { checkTenantAccess } from "@subaruhello/tenant-invariant/deno";
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant/deno";
 
 function assertEquals(actual: unknown, expected: unknown): void {
   if (!Object.is(actual, expected)) {

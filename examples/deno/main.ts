@@ -1,4 +1,4 @@
-import { checkTenantAccess } from "@subaruhello/tenant-invariant/deno";
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant/deno";
 
 export function canReadContract(
   authenticatedTenant: string,

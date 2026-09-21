@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { checkTenantAccess } from "@subaruhello/tenant-invariant";
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant";
 
 describe("published package API", () => {
   it("allows matching tenants", () => {

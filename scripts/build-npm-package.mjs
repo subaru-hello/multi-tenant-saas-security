@@ -110,4 +110,4 @@ await writeFile(join(outputRoot, "node", "index.cjs"), nodeCommonJsWrapper);
 const wasmBytes = await readFile(
   join(outputRoot, "node", "wasm", "tenant_invariant_bg.wasm"),
 );
-console.log(`Built @subaruhello/tenant-invariant (${wasmBytes.byteLength} byte Wasm binary).`);
+console.log(`Built @subaru-hello/tenant-invariant (${wasmBytes.byteLength} byte Wasm binary).`);

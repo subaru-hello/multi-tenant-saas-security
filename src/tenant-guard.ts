@@ -1,1 +1,1 @@
-export { checkTenantAccess } from "@subaruhello/tenant-invariant";
+export { checkTenantAccess } from "@subaru-hello/tenant-invariant";

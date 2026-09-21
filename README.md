@@ -22,7 +22,7 @@ application integration under `src/`, and regression tests that cover both the
 allowed path and the tenant-boundary failure. That keeps the security claim
 executable instead of leaving it only in documentation.
 
-The first reusable package is `@subaruhello/tenant-invariant`. It has tested
+The first reusable package is `@subaru-hello/tenant-invariant`. It has tested
 entry points for Node.js, Cloudflare Workers, and Deno. Browser-side
 authorization is intentionally excluded because a client can bypass it.
 
@@ -60,7 +60,7 @@ security decision is not reimplemented in TypeScript.
 Node.js uses the default entry point:
 
 ```ts
-import { checkTenantAccess } from "@subaruhello/tenant-invariant";
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant";
 
 const decision = checkTenantAccess(authenticatedTenant, resourceOwnerTenant);
 ```
@@ -68,13 +68,13 @@ const decision = checkTenantAccess(authenticatedTenant, resourceOwnerTenant);
 Cloudflare Workers uses its runtime-specific entry point:
 
 ```ts
-import { checkTenantAccess } from "@subaruhello/tenant-invariant/cloudflare";
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant/cloudflare";
 ```
 
 Deno uses its native Wasm entry point:
 
 ```ts
-import { checkTenantAccess } from "@subaruhello/tenant-invariant/deno";
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant/deno";
 ```
 
 Executable examples live under `examples/cloudflare-worker` and

@@ -1,4 +1,4 @@
-import { checkTenantAccess } from "@subaruhello/tenant-invariant/cloudflare";
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant/cloudflare";
 
 const authenticatedTenant = "tenant-a";
 const resourceOwners = new Map<string, string>([
