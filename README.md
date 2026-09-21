@@ -8,6 +8,18 @@ The demo models a contract-management SaaS with two tenants. It includes a
 deliberate "attack lab" where you can submit another tenant's contract ID and
 see the request denied by the Rust guard.
 
+## Why this repository exists
+
+This is a living integration lab for Rust tools that make multi-tenant SaaS
+applications safer. `tenant-invariant` is the first tool under test, not the
+last: future authorization, audit, policy, and isolation tools can be exercised
+against the same small TypeScript application and realistic attack scenarios.
+
+Each experiment should add a thin Rust/Wasm adapter under `rust/`, its
+application integration under `src/`, and regression tests that cover both the
+allowed path and the tenant-boundary failure. That keeps the security claim
+executable instead of leaving it only in documentation.
+
 ## What it demonstrates
 
 ```text
