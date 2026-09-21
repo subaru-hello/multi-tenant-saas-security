@@ -1,5 +1,7 @@
 # multi-tenant-saas-security
 
+[![CI](https://github.com/subaru-hello/multi-tenant-saas-security/actions/workflows/ci.yml/badge.svg)](https://github.com/subaru-hello/multi-tenant-saas-security/actions/workflows/ci.yml)
+
 A small TypeScript SaaS application that uses the Rust
 [`tenant-invariant`](https://crates.io/crates/tenant-invariant) crate through
 WebAssembly before returning tenant-owned data.
@@ -20,6 +22,10 @@ application integration under `src/`, and regression tests that cover both the
 allowed path and the tenant-boundary failure. That keeps the security claim
 executable instead of leaving it only in documentation.
 
+The first reusable package is `@subaruhello/tenant-invariant`. It has tested
+entry points for Node.js, Cloudflare Workers, and Deno. Browser-side
+authorization is intentionally excluded because a client can bypass it.
+
 ## What it demonstrates
 
 ```text
@@ -35,7 +41,7 @@ or form field is ignored.
 
 ## Setup
 
-You need Node.js 20 or newer, Rust, and `wasm-pack`.
+You need Node.js 22 or newer, Rust, and `wasm-pack`.
 
 ```bash
 cargo install wasm-pack
@@ -45,9 +51,36 @@ npm run dev
 
 Open <http://localhost:3000>.
 
-`npm run dev` builds the Rust adapter and starts the TypeScript server. The
-adapter depends on `tenant-invariant = "0.1.0"` from crates.io; the security
-decision is not reimplemented in TypeScript.
+`npm run dev` builds the local npm package and starts the TypeScript server.
+The adapter depends on `tenant-invariant = "0.1.0"` from crates.io; the
+security decision is not reimplemented in TypeScript.
+
+## Use the npm package
+
+Node.js uses the default entry point:
+
+```ts
+import { checkTenantAccess } from "@subaruhello/tenant-invariant";
+
+const decision = checkTenantAccess(authenticatedTenant, resourceOwnerTenant);
+```
+
+Cloudflare Workers uses its runtime-specific entry point:
+
+```ts
+import { checkTenantAccess } from "@subaruhello/tenant-invariant/cloudflare";
+```
+
+Deno uses its native Wasm entry point:
+
+```ts
+import { checkTenantAccess } from "@subaruhello/tenant-invariant/deno";
+```
+
+Executable examples live under `examples/cloudflare-worker` and
+`examples/deno`. The Cloudflare example uses a current compatibility date,
+generated environment types, structured logs, and a generic `404` response for
+denied resources.
 
 ## Try the scenarios
 
@@ -77,9 +110,20 @@ curl -i -X POST http://localhost:3000/api/contracts/batch \
 npm run verify
 ```
 
-The tests cover same-tenant access, cross-tenant access, a forged tenant claim,
-unknown ownership, a mixed-tenant batch, and switching the server-side demo
-session.
+The verification builds all three Wasm targets, checks TypeScript, runs the
+Node.js application and package tests, executes the Worker inside Cloudflare's
+local runtime, runs Deno tests, validates a Wrangler deployment bundle, and
+inspects the npm tarball.
+
+Individual checks are also available:
+
+```bash
+npm run test:node
+npm run test:cloudflare
+npm run test:deno
+npm run cloudflare:dry-run
+npm run pack:check
+```
 
 ## Security boundaries
 
@@ -90,6 +134,9 @@ management, and database-level isolation such as PostgreSQL Row-Level Security.
 
 Even after TenantInvariant returns `Allow`, this demo performs a tenant-scoped
 SQL query. The guard is one layer, not a substitute for defense in depth.
+
+The Cloudflare and Deno examples prove runtime compatibility, but their small
+in-memory resource maps are not production identity or persistence systems.
 
 ## License
 

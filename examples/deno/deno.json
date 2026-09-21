@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@subaruhello/tenant-invariant/deno": "../../packages/tenant-invariant/dist/deno/index.js"
+  }
+}

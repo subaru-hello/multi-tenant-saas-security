@@ -3,6 +3,9 @@ name = "tenant-guard-wasm"
 version = "0.1.0"
 edition = "2021"
 publish = false
+description = "WebAssembly adapter for the tenant-invariant Rust crate"
+license = "MIT"
+repository = "https://github.com/subaru-hello/multi-tenant-saas-security"
 
 [lib]
 crate-type = ["cdylib"]

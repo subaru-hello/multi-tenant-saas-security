@@ -1,8 +1,11 @@
 node_modules/
 generated/
+packages/*/dist/
 target/
 rust/tenant-guard-wasm/target/
 data/*.db
 data/*.db-*
+.wrangler/
+examples/cloudflare-worker/.wrangler/
 .DS_Store
 coverage/

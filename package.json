@@ -4,30 +4,45 @@
   "private": true,
   "type": "module",
   "description": "A TypeScript SaaS demo that enforces tenant isolation with the Rust tenant-invariant crate compiled to WebAssembly.",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build:wasm": "wasm-pack build rust/tenant-guard-wasm --target nodejs --out-dir ../../generated/tenant-guard --release",
-    "dev": "npm run build:wasm && tsx watch src/server.ts",
-    "start": "npm run build:wasm && tsx src/server.ts",
-    "test": "npm run build:wasm && node --import tsx --test tests/*.test.ts",
-    "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm test"
+    "build": "node scripts/build-npm-package.mjs",
+    "build:wasm": "npm run build",
+    "dev": "npm run build && tsx watch src/server.ts",
+    "start": "npm run build && tsx src/server.ts",
+    "test": "npm run build && npm run test:node",
+    "test:node": "node --import tsx --test tests/*.test.ts",
+    "test:cloudflare": "npm run build && vitest run --config examples/cloudflare-worker/vitest.config.ts",
+    "test:deno": "npm run build && deno test --config examples/deno/deno.json examples/deno",
+    "typecheck": "npm run build && tsc --noEmit",
+    "cloudflare:types": "wrangler types examples/cloudflare-worker/worker-configuration.d.ts --config examples/cloudflare-worker/wrangler.jsonc",
+    "cloudflare:dry-run": "npm run build && wrangler deploy --dry-run --config examples/cloudflare-worker/wrangler.jsonc",
+    "pack:check": "npm pack --dry-run --workspace @subaruhello/tenant-invariant",
+    "verify": "npm run build && tsc --noEmit && tsc -p examples/cloudflare-worker/test/tsconfig.json --noEmit && npm run test:node && vitest run --config examples/cloudflare-worker/vitest.config.ts && deno test --config examples/deno/deno.json examples/deno && npm run cloudflare:dry-run && npm run pack:check"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
+    "@subaruhello/tenant-invariant": "0.1.0",
     "better-sqlite3": "^13.0.3",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.1.13",
     "@types/better-sqlite3": "^9.6.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.2",
     "@types/supertest": "^7.2.1",
+    "deno": "2.9.6",
     "supertest": "^7.2.2",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "4.1.11",
+    "wrangler": "4.135.0"
   }
 }

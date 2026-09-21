@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Rust Wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.13.0 --locked
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check generated Worker types
+        run: npm run cloudflare:types -- --check
+
+      - name: Check Rust formatting
+        run: cargo fmt --check --manifest-path rust/tenant-guard-wasm/Cargo.toml
+
+      - name: Lint Rust Wasm adapter
+        run: cargo clippy --manifest-path rust/tenant-guard-wasm/Cargo.toml --target wasm32-unknown-unknown -- -D warnings
+
+      - name: Verify all runtimes and package contents
+        run: npm run verify
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev

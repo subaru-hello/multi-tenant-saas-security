@@ -1,0 +1,55 @@
+{
+  "name": "@subaruhello/tenant-invariant",
+  "version": "0.1.0",
+  "description": "Rust-backed tenant isolation guard for Node.js, Cloudflare Workers, and Deno.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subaru-hello/multi-tenant-saas-security.git",
+    "directory": "packages/tenant-invariant"
+  },
+  "homepage": "https://github.com/subaru-hello/multi-tenant-saas-security#readme",
+  "bugs": "https://github.com/subaru-hello/multi-tenant-saas-security/issues",
+  "keywords": [
+    "authorization",
+    "multi-tenant",
+    "rust",
+    "saas",
+    "security",
+    "webassembly"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build-npm-package.mjs",
+    "prepack": "npm run build"
+  },
+  "main": "./dist/node/index.cjs",
+  "module": "./dist/node/index.js",
+  "types": "./dist/node/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
+    },
+    "./cloudflare": {
+      "types": "./dist/cloudflare/index.d.ts",
+      "default": "./dist/cloudflare/index.js"
+    },
+    "./deno": {
+      "types": "./dist/deno/index.d.ts",
+      "default": "./dist/deno/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
