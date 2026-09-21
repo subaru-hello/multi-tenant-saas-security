@@ -1,0 +1,12 @@
+.git
+.github
+node_modules
+target
+rust
+packages
+examples
+tests
+data
+coverage
+.env
+*.log

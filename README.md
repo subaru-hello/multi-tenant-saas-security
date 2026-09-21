@@ -2,107 +2,54 @@
 
 [![CI](https://github.com/subaru-hello/multi-tenant-saas-security/actions/workflows/ci.yml/badge.svg)](https://github.com/subaru-hello/multi-tenant-saas-security/actions/workflows/ci.yml)
 
-A small TypeScript SaaS application that uses the Rust
-[`tenant-invariant`](https://crates.io/crates/tenant-invariant) crate through
-WebAssembly before returning tenant-owned data.
+A working TypeScript contract-management SaaS and security lab for Rust tools
+that protect multi-tenant applications. It uses the published
+[`@subaru-hello/tenant-invariant`](https://www.npmjs.com/package/@subaru-hello/tenant-invariant)
+WebAssembly package in Node.js.
 
-The demo models a contract-management SaaS with two tenants. It includes a
-deliberate "attack lab" where you can submit another tenant's contract ID and
-see the request denied by the Rust guard.
+The application includes GitHub OAuth, organizations, admin/member
+memberships, invitations, contract CRUD, server-side sessions, CSRF defense,
+authorization audit events, PostgreSQL Row-Level Security, and a Kubernetes
+deployment for a self-hosted server.
 
-## Why this repository exists
-
-This is a living integration lab for Rust tools that make multi-tenant SaaS
-applications safer. `tenant-invariant` is the first tool under test, not the
-last: future authorization, audit, policy, and isolation tools can be exercised
-against the same small TypeScript application and realistic attack scenarios.
-
-Each experiment should add a thin Rust/Wasm adapter under `rust/`, its
-application integration under `src/`, and regression tests that cover both the
-allowed path and the tenant-boundary failure. That keeps the security claim
-executable instead of leaving it only in documentation.
-
-The first reusable package is `@subaru-hello/tenant-invariant`. It has tested
-entry points for Node.js, Cloudflare Workers, and Deno. Browser-side
-authorization is intentionally excluded because a client can bypass it.
-
-## What it demonstrates
+## The boundary
 
 ```text
-untrusted resource ID
-  -> actor tenant from the server-side session
-  -> resource owner resolved from SQLite
-  -> tenant-invariant runs through WebAssembly
-  -> action is denied or continues to tenant-scoped SQL
+GitHub identity
+  -> membership loaded by the server
+  -> untrusted contract ID
+  -> owner metadata resolved independently
+  -> tenant-invariant returns Allow / CrossTenant / UnknownOwner
+  -> final content query runs with PostgreSQL RLS
 ```
 
-The tool request never establishes tenant identity. A forged `tenantId` query
-or form field is ignored.
+Request bodies, query parameters, and AI model output never choose the active
+tenant. A server-side session chooses a tenant only after membership has been
+verified. Cross-tenant and unknown resources both return a generic `404`, while
+the internal decision is recorded in the actor tenant's audit log.
 
-## Setup
+The database user used by the application is deliberately not the PostgreSQL
+bootstrap superuser. `contracts` and `audit_events` use both `ENABLE ROW LEVEL
+SECURITY` and `FORCE ROW LEVEL SECURITY`. An unrestricted metadata table holds
+only the contract-to-tenant mapping needed by the Rust guard; contract content
+remains behind RLS.
 
-You need Node.js 22 or newer, Rust, and `wasm-pack`.
+## Run locally
+
+Create a PostgreSQL database and a non-superuser application role. Set:
 
 ```bash
-cargo install wasm-pack
+export DATABASE_URL='postgresql://tenant_saas_app:password@127.0.0.1:5432/tenant_saas'
+export BASE_URL='http://127.0.0.1:3000'
+export SESSION_SECRET="$(openssl rand -hex 32)"
+export GITHUB_CLIENT_ID='<github-oauth-client-id>'
+export GITHUB_CLIENT_SECRET='<github-oauth-client-secret>'
 npm install
 npm run dev
 ```
 
-Open <http://localhost:3000>.
-
-`npm run dev` builds the local npm package and starts the TypeScript server.
-The adapter depends on `tenant-invariant = "0.1.0"` from crates.io; the
-security decision is not reimplemented in TypeScript.
-
-## Use the npm package
-
-Node.js uses the default entry point:
-
-```ts
-import { checkTenantAccess } from "@subaru-hello/tenant-invariant";
-
-const decision = checkTenantAccess(authenticatedTenant, resourceOwnerTenant);
-```
-
-Cloudflare Workers uses its runtime-specific entry point:
-
-```ts
-import { checkTenantAccess } from "@subaru-hello/tenant-invariant/cloudflare";
-```
-
-Deno uses its native Wasm entry point:
-
-```ts
-import { checkTenantAccess } from "@subaru-hello/tenant-invariant/deno";
-```
-
-Executable examples live under `examples/cloudflare-worker` and
-`examples/deno`. The Cloudflare example uses a current compatibility date,
-generated environment types, structured logs, and a generic `404` response for
-denied resources.
-
-## Try the scenarios
-
-Start as Tenant A. The dashboard shows only its contracts.
-
-- `alpha-contract-001` is allowed.
-- `beta-contract-001` is denied as `CrossTenant`.
-- `missing-contract` is denied as `UnknownOwner`.
-- Switching the demo session to Tenant B changes the authenticated actor.
-
-The browser sees a generic `404` for denied resources. The dashboard displays
-the internal reason only to explain the demo.
-
-You can also exercise the JSON API:
-
-```bash
-curl -i http://localhost:3000/api/contracts/alpha-contract-001
-curl -i 'http://localhost:3000/api/contracts/beta-contract-001?tenantId=tenant-b'
-curl -i -X POST http://localhost:3000/api/contracts/batch \
-  -H 'content-type: application/json' \
-  -d '{"ids":["alpha-contract-001","beta-contract-001"]}'
-```
+The GitHub OAuth callback for local development is:
+`http://127.0.0.1:3000/auth/github/callback`.
 
 ## Verify it
 
@@ -110,33 +57,54 @@ curl -i -X POST http://localhost:3000/api/contracts/batch \
 npm run verify
 ```
 
-The verification builds all three Wasm targets, checks TypeScript, runs the
-Node.js application and package tests, executes the Worker inside Cloudflare's
-local runtime, runs Deno tests, validates a Wrangler deployment bundle, and
-inspects the npm tarball.
-
-Individual checks are also available:
+That command verifies TypeScript, the Node application, Cloudflare Workers,
+Deno, the Wrangler bundle, and npm package contents. The PostgreSQL integration
+test is enabled when `TEST_DATABASE_URL` is present:
 
 ```bash
-npm run test:node
-npm run test:cloudflare
-npm run test:deno
-npm run cloudflare:dry-run
-npm run pack:check
+TEST_DATABASE_URL='postgresql://tenant_saas_app:password@127.0.0.1:5432/tenant_saas' \
+  npm run test:postgres
 ```
 
-## Security boundaries
+The integration test demonstrates that an unscoped SQL query sees zero
+contract rows, a tenant-scoped query cannot retrieve another tenant's contract,
+and TenantInvariant records `CrossTenant` for that same attack.
 
-This repository is an educational demo. The tenant switcher is intentionally
-fake authentication. A production application still needs real authentication,
-action-level authorization, CSRF protection, rate limiting, secure session
-management, and database-level isolation such as PostgreSQL Row-Level Security.
+## Runtime package examples
 
-Even after TenantInvariant returns `Allow`, this demo performs a tenant-scoped
-SQL query. The guard is one layer, not a substitute for defense in depth.
+The npm package also has tested runtime-specific entry points:
 
-The Cloudflare and Deno examples prove runtime compatibility, but their small
-in-memory resource maps are not production identity or persistence systems.
+```ts
+// Node.js
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant";
+
+// Cloudflare Workers
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant/cloudflare";
+
+// Deno
+import { checkTenantAccess } from "@subaru-hello/tenant-invariant/deno";
+```
+
+Executable Cloudflare and Deno examples live under `examples/`. Browser-side
+authorization is intentionally excluded because clients can bypass it.
+
+## Home server deployment
+
+[`deploy/kubernetes`](deploy/kubernetes) targets `octom-server`: kubeadm,
+containerd, Cilium, `local-path` storage, NodePort `30302`, and a host-managed
+Cloudflare Tunnel. The intended public URL is
+`https://saas.octomblog.com`. GitHub Actions verifies the project, builds a
+`linux/amd64` image, and publishes it to GitHub Container Registry.
+
+See [`deploy/kubernetes/README.md`](deploy/kubernetes/README.md) for OAuth,
+secret, deployment, and tunnel setup.
+
+## Security scope
+
+This is a deployable small SaaS, not a claim that one guard solves
+multi-tenancy. Production operation still requires backups, dependency and
+image updates, TLS at the edge, monitoring, OAuth secret rotation, recovery
+testing, and review of database migrations and authorization changes.
 
 ## License
 

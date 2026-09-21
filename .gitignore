@@ -9,3 +9,5 @@ data/*.db-*
 examples/cloudflare-worker/.wrangler/
 .DS_Store
 coverage/
+dist/
+.env

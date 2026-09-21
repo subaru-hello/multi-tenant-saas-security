@@ -1,0 +1,27 @@
+{
+  "name": "tenant-invariant-saas-container",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@subaru-hello/tenant-invariant": "0.1.0",
+    "connect-pg-simple": "10.0.0",
+    "cookie-parser": "1.4.7",
+    "express": "5.2.1",
+    "express-rate-limit": "8.7.0",
+    "express-session": "1.18.2",
+    "helmet": "8.1.0",
+    "pg": "8.16.3"
+  },
+  "devDependencies": {
+    "@types/connect-pg-simple": "7.0.3",
+    "@types/cookie-parser": "1.4.10",
+    "@types/express": "5.0.6",
+    "@types/express-session": "1.18.2",
+    "@types/node": "26.6.2",
+    "@types/pg": "8.15.5",
+    "typescript": "7.0.2"
+  }
+}

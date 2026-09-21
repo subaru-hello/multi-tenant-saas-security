@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A TypeScript SaaS demo that enforces tenant isolation with the Rust tenant-invariant crate compiled to WebAssembly.",
+  "description": "A GitHub-authenticated TypeScript SaaS that combines Rust/Wasm tenant checks with PostgreSQL Row-Level Security.",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "node scripts/build-npm-package.mjs",
+    "build:app": "tsc -p tsconfig.build.json",
     "build:wasm": "npm run build",
     "dev": "npm run build && tsx watch src/server.ts",
     "start": "npm run build && tsx src/server.ts",
@@ -16,6 +17,7 @@
     "test:node": "node --import tsx --test tests/*.test.ts",
     "test:cloudflare": "npm run build && vitest run --config examples/cloudflare-worker/vitest.config.ts",
     "test:deno": "npm run build && deno test --config examples/deno/deno.json examples/deno",
+    "test:postgres": "node --import tsx --test tests/postgres.integration.test.ts",
     "typecheck": "npm run build && tsc --noEmit",
     "cloudflare:types": "wrangler types examples/cloudflare-worker/worker-configuration.d.ts --config examples/cloudflare-worker/wrangler.jsonc",
     "cloudflare:dry-run": "npm run build && wrangler deploy --dry-run --config examples/cloudflare-worker/wrangler.jsonc",
@@ -27,16 +29,22 @@
   },
   "dependencies": {
     "@subaru-hello/tenant-invariant": "0.1.0",
-    "better-sqlite3": "^13.0.3",
+    "connect-pg-simple": "10.0.0",
     "cookie-parser": "^1.4.7",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "express-rate-limit": "8.7.0",
+    "express-session": "1.18.2",
+    "helmet": "8.1.0",
+    "pg": "8.16.3"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "1.1.13",
-    "@types/better-sqlite3": "^9.6.0",
+    "@types/connect-pg-simple": "7.0.3",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
+    "@types/express-session": "1.18.2",
     "@types/node": "^26.6.2",
+    "@types/pg": "8.15.5",
     "@types/supertest": "^7.2.1",
     "deno": "2.9.6",
     "supertest": "^7.2.2",

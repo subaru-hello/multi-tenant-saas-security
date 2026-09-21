@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: tenant-saas
+spec:
+  selector:
+    app.kubernetes.io/name: tenant-saas-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres

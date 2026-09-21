@@ -1,47 +1,46 @@
-import {
-  findOwner,
-  findScopedContract,
-  writeAuditLog,
-  type DemoDatabase,
-} from "./database.js";
+import type { TenantStore } from "./store.js";
 import { checkTenantAccess } from "./tenant-guard.js";
 import type { InspectionResult, TenantId } from "./types.js";
 
-export function inspectContract(
-  db: DemoDatabase,
+export async function inspectContract(
+  store: TenantStore,
   actorTenant: TenantId,
+  actorUserId: string,
   contractId: string,
-): InspectionResult {
-  // The ID is untrusted: it may have been supplied by a user or an AI agent.
-  const ownerTenant = findOwner(db, contractId);
-
-  // Both inputs are resolved outside the model: actor from authenticated context,
-  // owner from the application's database.
+): Promise<InspectionResult> {
+  // Resource IDs may come from a user or an AI agent. They never establish ownership.
+  const ownerTenant = await store.resolveContractOwner(contractId);
   const decision = checkTenantAccess(actorTenant, ownerTenant);
-  writeAuditLog(db, actorTenant, contractId, ownerTenant, decision);
+
+  await store.writeAuditEvent({
+    actorTenant,
+    actorUserId,
+    resourceId: contractId,
+    resourceTenant: ownerTenant,
+    decision,
+  });
 
   if (decision !== "Allow") {
     return { kind: "denied", contractId, decision, externalStatus: 404 };
   }
 
-  // Defense in depth: the final read is tenant-scoped even after the guard allows it.
-  const contract = findScopedContract(db, contractId, actorTenant);
+  // The final query executes with PostgreSQL RLS scoped to actorTenant.
+  const contract = await store.findScopedContract(actorTenant, contractId);
   if (!contract) {
-    return {
-      kind: "denied",
-      contractId,
-      decision: "UnknownOwner",
-      externalStatus: 404,
-    };
+    return { kind: "denied", contractId, decision: "UnknownOwner", externalStatus: 404 };
   }
-
   return { kind: "allowed", contract, decision };
 }
 
-export function inspectBatch(
-  db: DemoDatabase,
+export async function inspectBatch(
+  store: TenantStore,
   actorTenant: TenantId,
+  actorUserId: string,
   contractIds: string[],
-): InspectionResult[] {
-  return contractIds.map((id) => inspectContract(db, actorTenant, id));
+): Promise<InspectionResult[]> {
+  const results: InspectionResult[] = [];
+  for (const id of contractIds) {
+    results.push(await inspectContract(store, actorTenant, actorUserId, id));
+  }
+  return results;
 }
