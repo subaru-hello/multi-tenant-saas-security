@@ -1,0 +1,8 @@
+node_modules/
+generated/
+target/
+rust/tenant-guard-wasm/target/
+data/*.db
+data/*.db-*
+.DS_Store
+coverage/

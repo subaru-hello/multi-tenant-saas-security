@@ -1,0 +1,33 @@
+{
+  "name": "multi-tenant-saas-security",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A TypeScript SaaS demo that enforces tenant isolation with the Rust tenant-invariant crate compiled to WebAssembly.",
+  "scripts": {
+    "build:wasm": "wasm-pack build rust/tenant-guard-wasm --target nodejs --out-dir ../../generated/tenant-guard --release",
+    "dev": "npm run build:wasm && tsx watch src/server.ts",
+    "start": "npm run build:wasm && tsx src/server.ts",
+    "test": "npm run build:wasm && node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.2",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.2.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
