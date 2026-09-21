@@ -7,6 +7,8 @@ that protect multi-tenant applications. It uses the published
 [`@subaru-hello/tenant-invariant`](https://www.npmjs.com/package/@subaru-hello/tenant-invariant)
 WebAssembly package in Node.js.
 
+Live deployment: [saas.octomblog.com](https://saas.octomblog.com)
+
 The application includes GitHub OAuth, organizations, admin/member
 memberships, invitations, contract CRUD, server-side sessions, CSRF defense,
 authorization audit events, PostgreSQL Row-Level Security, and a Kubernetes
@@ -92,7 +94,7 @@ authorization is intentionally excluded because clients can bypass it.
 
 [`deploy/kubernetes`](deploy/kubernetes) targets `octom-server`: kubeadm,
 containerd, Cilium, `local-path` storage, NodePort `30302`, and a host-managed
-Cloudflare Tunnel. The intended public URL is
+Cloudflare Tunnel. The public URL is
 `https://saas.octomblog.com`. GitHub Actions verifies the project, builds a
 `linux/amd64` image, and publishes it to GitHub Container Registry.
 
