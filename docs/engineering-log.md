@@ -38,3 +38,7 @@ Rust/Wasmの`tenant-invariant`とPostgreSQLのRow-Level Security（RLS）を重�
 ### ブログで使える失敗談
 
 最初の構成ではアプリもPostgreSQLの管理ユーザーで接続していたため、RLSを定義しても実際には迂回できた。さらにKubernetesへの初回デプロイでは、非rootユーザーを使っているつもりでもUIDを数値で明示していなかったため、セキュリティ設定がアプリ起動を止めた。どちらも「設定を書いた」ことと「その制約が実際に効いている」ことは別だと分かる例だった。負のテストと実環境のEventsを根拠に確認することが重要だった。
+
+### 次の設計テーマ — 監査可能なTenantInvariant
+
+DEV Communityのフィードバックを起点に、単なる許可・拒否ログを、リクエストID、操作、適用ポリシー、実行結果まで結び付けた監査証跡へ拡張するPRDを書いた。特に、混在テナントのバッチでは全IDを先に判定し、1件でも拒否なら保護された本文取得や更新を一切始めない「事前判定」を採用する。詳細は[`auditable-tenant-invariant.md`](./prd/auditable-tenant-invariant.md)を参照する。
